@@ -7,7 +7,8 @@ import Keyboard exposing (KeyCode)
 import Text
 import Window
 
-import Fish exposing (..)
+import Fish exposing (Fish)
+import Tank exposing (Tank)
 
 
 -- MODEL --
@@ -19,12 +20,6 @@ type alias Model =
 
 type Mode = Tap | Watch
 
-type alias Tank =
-  { width : Int
-  , height : Int
-  , fish : List Fish
-  }
-
 type alias Input =
   { t : Bool
   , w : Bool
@@ -34,9 +29,9 @@ initialState : Model
 initialState =
   { mode = Watch
   , tank =
-      { width = 400
-      , height = 200
-      , fish = [ Fish 10 20, Fish -30 -40, Fish 50 60 ]
+      { width = 1000
+      , height = 1000
+      , fishes = [ Fish 10 20, Fish -30 -40, Fish 50 60 ]
       }
   }
 
@@ -56,38 +51,35 @@ update {t,w} ({mode,tank} as model) =
 
 -- VIEW --
 
-view : Model -> (Int, Int) -> Element
-view {mode,tank} (w,h) =
+view : Model -> Int -> Int -> Element
+view {mode,tank} winW winH =
   let
-    bkgd = rect (toFloat w) (toFloat h) |> filled blue
-    fish = List.map Fish.render tank.fish
-    text = drawText mode
-      |> Maybe.map (\t -> [t])
-      |> Maybe.withDefault []
-    forms = bkgd :: fish ++ text
+    tankForm = Tank.render tank
+    textOffset = toFloat (20 - (min winH tank.height) // 2)
+    textForm = drawText mode |> moveY textOffset
   in
-    collage w h forms
+    collage winW winH [tankForm, textForm]
 
-drawText : Mode -> Maybe Form
+drawText : Mode -> Form
 drawText mode =
   let
     msg =
-      if mode == Tap then Just "Click to tap the tank!"
-      else Nothing
+      if | mode == Tap -> "Click to tap the tank!"
+         | otherwise -> ""
   in
-    Maybe.map formatText msg
+    (formatText >> toForm) msg
 
-formatText : String -> Form
+formatText : String -> Element
 formatText = Text.fromString
-  >> Text.color white
+  >> Text.color black
   >> Text.height 30
   >> centered
-  >> toForm
 
 
 -- SIGNALS --
 
-main = Signal.map2 view state Window.dimensions
+main : Signal Element
+main = Signal.map3 view state Window.width Window.height
 
 state : Signal Model
 state = Signal.foldp update initialState input
