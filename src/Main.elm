@@ -2,12 +2,15 @@ import Char
 import Color exposing (..)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (Element, centered)
+import List
 import Keyboard exposing (KeyCode)
 import Text
 import Window
 
+import Fish exposing (..)
 
--- Model --
+
+-- MODEL --
 
 type alias Model =
   { mode : Mode
@@ -19,7 +22,7 @@ type Mode = Tap | Watch
 type alias Tank =
   { width : Int
   , height : Int
-  , fish : List (Int, Int)
+  , fish : List Fish
   }
 
 type alias Input =
@@ -33,12 +36,12 @@ initialState =
   , tank =
       { width = 400
       , height = 200
-      , fish = [ (10, 20), (-30, -40), (50, 60) ]
+      , fish = [ Fish 10 20, Fish -30 -40, Fish 50 60 ]
       }
   }
 
 
--- Update --
+-- UPDATE --
 
 update : Input -> Model -> Model
 update {t,w} ({mode,tank} as model) =
@@ -51,25 +54,19 @@ update {t,w} ({mode,tank} as model) =
   }
 
 
--- View --
+-- VIEW --
 
 view : Model -> (Int, Int) -> Element
 view {mode,tank} (w,h) =
   let
     bkgd = rect (toFloat w) (toFloat h) |> filled blue
-    fish = List.map (\(x, y) -> drawFish x y) tank.fish
-    textM = drawText mode
-    forms = textM
-      |> Maybe.map (\t -> bkgd :: fish ++ [t])
-      |> Maybe.withDefault (bkgd :: fish)
+    fish = List.map Fish.render tank.fish
+    text = drawText mode
+      |> Maybe.map (\t -> [t])
+      |> Maybe.withDefault []
+    forms = bkgd :: fish ++ text
   in
     collage w h forms
-
-drawFish : Int -> Int -> Form
-drawFish x y
-  = oval 40 20
-  |> filled green
-  |> move (toFloat x, toFloat y)
 
 drawText : Mode -> Maybe Form
 drawText mode =
@@ -88,7 +85,7 @@ formatText = Text.fromString
   >> toForm
 
 
--- Signals --
+-- SIGNALS --
 
 main = Signal.map2 view state Window.dimensions
 

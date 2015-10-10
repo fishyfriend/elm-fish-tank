@@ -3,9 +3,7 @@
     "summary": "fishy learning exercise",
     "repository": "https://github.com/fishyfriend/elm-fish-tank.git",
     "license": "MIT",
-    "source-directories": [
-        "."
-    ],
+    "source-directories": [ "src" ],
     "exposed-modules": [],
     "dependencies": {
         "elm-lang/core": "2.1.0 <= v < 3.0.0"
