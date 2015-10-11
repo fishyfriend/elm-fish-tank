@@ -33,7 +33,7 @@ type alias Input =
 -- UPDATE --
 
 update : Input -> State -> State
-update {time, fps, winSize, tKey, wKey} s =
+update {time, winSize, tKey, wKey} s =
   case s of
     PreInit ->
       let
@@ -41,7 +41,7 @@ update {time, fps, winSize, tKey, wKey} s =
         tank = Tank.init 20 winSize seed
       in
         Running { mode = Watch, tank = tank }
-    Running ({mode,tank} as r) ->
+    Running ( {mode,tank} as r ) ->
       Running { r |
         mode <-
           case (mode, tKey, wKey) of
