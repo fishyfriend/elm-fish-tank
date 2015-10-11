@@ -4,7 +4,9 @@ import Graphics.Collage exposing (..)
 import Graphics.Element exposing (Element, centered)
 import List
 import Keyboard exposing (KeyCode)
+import Random exposing (initialSeed)
 import Text
+import Time exposing (..)
 import Window
 
 import Fish exposing (Fish)
@@ -13,52 +15,56 @@ import Tank exposing (Tank)
 
 -- MODEL --
 
-type alias Model =
-  { mode : Mode
-  , tank : Tank
-  }
+type State
+  = PreInit
+  | Running { mode : Mode, tank: Tank }
 
-type Mode = Tap | Watch
+type Mode = Watch | Tap
 
 type alias Input =
-  { t : Bool
-  , w : Bool
-  }
-
-initialState : Model
-initialState =
-  { mode = Watch
-  , tank =
-      { width = 1000
-      , height = 1000
-      , fishes = [ Fish 10 20, Fish -30 -40, Fish 50 60 ]
-      }
+  { time : Time
+  , fps : Time
+  , winSize : (Int, Int)
+  , tKey : Bool
+  , wKey : Bool
   }
 
 
 -- UPDATE --
 
-update : Input -> Model -> Model
-update {t,w} ({mode,tank} as model) =
-  { model |
-      mode <-
-        case (mode, t, w) of
-          (Tap, _, True) -> Watch
-          (Watch, True, _) -> Tap
-          _ -> mode
-  }
+update : Input -> State -> State
+update {time, fps, winSize, tKey, wKey} s =
+  case s of
+    PreInit ->
+      let
+        seed = time |> inMilliseconds >> round >> initialSeed
+        tank = Tank.init 20 winSize seed
+      in
+        Running { mode = Watch, tank = tank }
+    Running ({mode,tank} as r) ->
+      Running { r |
+        mode <-
+          case (mode, tKey, wKey) of
+            (Tap, _, True) -> Watch
+            (Watch, True, _) -> Tap
+            _ -> mode
+      }
 
 
 -- VIEW --
 
-view : Model -> Int -> Int -> Element
-view {mode,tank} winW winH =
-  let
-    tankForm = Tank.render tank
-    textOffset = toFloat (20 - (min winH tank.height) // 2)
-    textForm = drawText mode |> moveY textOffset
-  in
-    collage winW winH [tankForm, textForm]
+view : State -> (Int, Int) -> Element
+view s (w, h) =
+  case s of
+    PreInit ->
+      Text.fromString "Loading..." |> centered
+    Running {mode,tank} ->
+      let
+        tankForm = Tank.render tank
+        textY = -(min (toFloat h) tank.height) / 2 + 20
+        textForm = drawText mode |> moveY textY
+      in
+        collage w h [tankForm, textForm]
 
 drawText : Mode -> Form
 drawText mode =
@@ -79,18 +85,24 @@ formatText = Text.fromString
 -- SIGNALS --
 
 main : Signal Element
-main = Signal.map3 view state Window.width Window.height
+main = Signal.map2 view state Window.dimensions
 
-state : Signal Model
-state = Signal.foldp update initialState input
+state : Signal State
+state = Signal.foldp update PreInit input
 
 input : Signal Input
 input =
   let
+    time = Signal.map fst timeAndFps
+    fps = Signal.map snd timeAndFps
+    winSize = Window.dimensions
     t = keyDown 'T'
     w = keyDown 'W'
   in
-    Signal.map2 Input t w
+    Signal.map5 Input time fps winSize t w
+
+timeAndFps : Signal (Time, Time)
+timeAndFps = timestamp << fps <| 30
 
 keyDown : Char -> Signal Bool
 keyDown k =

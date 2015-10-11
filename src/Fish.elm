@@ -6,8 +6,8 @@ import Graphics.Collage exposing (..)
 
 
 type alias Fish =
-  { x : Int
-  , y : Int
+  { x : Float
+  , y : Float
   }
 
 
@@ -15,4 +15,4 @@ render : Fish -> Form
 render {x,y}
   = oval 40 20
   |> filled green
-  |> move (toFloat x, toFloat y)
+  |> move (x, y)
