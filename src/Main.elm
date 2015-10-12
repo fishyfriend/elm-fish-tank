@@ -40,7 +40,8 @@ update ({time, fps, winSize, tKey, wKey} as i) s =
       let
         dims = winSize |> Point.fromPair |> Point.toFloat
         seed = time |> inMilliseconds >> round >> initialSeed
-        tank = Tank.init 20 dims seed
+        wave = { freq = 2, amp = 5 }
+        tank = Tank.init 60 dims wave seed
       in
         Running { mode = Watch, tank = tank }
     Running ({mode,tank} as r) ->
@@ -50,15 +51,15 @@ update ({time, fps, winSize, tKey, wKey} as i) s =
             (Tap, _, True) -> Watch
             (Watch, True, _) -> Tap
             _ -> mode
-        t = Tank.update fps tank
+        t = Tank.update time fps tank
       in
         Running { r | mode <- m, tank <- t }
 
 
 -- VIEW --
 
-view : State -> Point Float -> Element
-view s {x,y} =
+render : State -> Point Float -> Element
+render s {x,y} =
   case s of
     PreInit ->
       Text.fromString "Loading..." |> centered
@@ -93,7 +94,7 @@ main =
   let
     dims = Signal.map (Point.toFloat << Point.fromPair) Window.dimensions
   in
-    Signal.map2 view state dims
+    Signal.map2 render state dims
 
 state : Signal State
 state = Signal.foldp update PreInit input

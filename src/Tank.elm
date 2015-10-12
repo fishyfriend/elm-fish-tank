@@ -11,20 +11,22 @@ import Fish exposing (Fish)
 import Physics
 import Point exposing (Point)
 import Util.Random as UR
+import Wave exposing (Wave)
 
 
 type alias Tank =
   { dims : Point Float
+  , wave : Wave
   , fishes : List Fish }
 
 
-init : Int -> Point Float -> R.Seed -> Tank
-init n dims s =
+init : Int -> Point Float -> Wave -> R.Seed -> Tank
+init nFishes dims wave seed =
   let
-    g = R.list n (randomFish dims 10)
-    (fs, _) = R.generate g s
+    g = R.list nFishes (randomFish dims 0)
+    (fs, _) = R.generate g seed
   in
-     Tank dims fs
+     Tank dims wave fs
 
 randomFish : Point Float -> Float -> R.Generator Fish
 randomFish xyMax vMax =
@@ -33,13 +35,12 @@ randomFish xyMax vMax =
   in
     UR.map (\(p,v) -> {pos=p,vel=v}) pV
 
-empty : Point Float -> Tank
-empty dims = Tank dims []
-
-update : Time -> Tank -> Tank
-update t tank =
+update : Time -> Time -> Tank -> Tank
+update t dt ({fishes,wave} as tank) =
   let
-    fs = List.map (Physics.update t) tank.fishes
+    fs = fishes
+      |> List.map (Physics.update dt)
+      |> List.map (Wave.apply wave t)
   in
      { tank | fishes <- fs }
 
