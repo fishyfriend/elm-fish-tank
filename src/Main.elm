@@ -11,6 +11,7 @@ import Time exposing (..)
 import Window
 
 import Fish exposing (Fish)
+import Point exposing (Point)
 import Tank exposing (Tank)
 
 
@@ -29,6 +30,7 @@ type alias Input =
   , tKey : Bool
   , wKey : Bool }
 
+
 -- UPDATE --
 
 update : Input -> State -> State
@@ -36,9 +38,9 @@ update ({time, fps, winSize, tKey, wKey} as i) s =
   case s of
     PreInit ->
       let
-        (w, h) = (toFloat (fst winSize), toFloat (snd winSize))
+        dims = winSize |> Point.fromPair |> Point.toFloat
         seed = time |> inMilliseconds >> round >> initialSeed
-        tank = Tank.init 20 (w, h) seed
+        tank = Tank.init 20 dims seed
       in
         Running { mode = Watch, tank = tank }
     Running ({mode,tank} as r) ->
@@ -48,25 +50,25 @@ update ({time, fps, winSize, tKey, wKey} as i) s =
             (Tap, _, True) -> Watch
             (Watch, True, _) -> Tap
             _ -> mode
-        t = Tank.update (inSeconds fps) tank
+        t = Tank.update fps tank
       in
         Running { r | mode <- m, tank <- t }
 
 
 -- VIEW --
 
-view : State -> (Int, Int) -> Element
-view s (w, h) =
+view : State -> Point Float -> Element
+view s {x,y} =
   case s of
     PreInit ->
       Text.fromString "Loading..." |> centered
     Running {mode,tank} ->
       let
         tankForm = Tank.render tank
-        textY = -(min (toFloat h) tank.height) / 2 + 20
+        textY = -(min x tank.dims.x) / 2 + 20
         textForm = drawText mode |> moveY textY
       in
-        collage w h [tankForm, textForm]
+        collage (round x) (round y) [tankForm, textForm]
 
 drawText : Mode -> Form
 drawText mode =
@@ -87,7 +89,11 @@ formatText = Text.fromString
 -- SIGNALS --
 
 main : Signal Element
-main = Signal.map2 view state Window.dimensions
+main =
+  let
+    dims = Signal.map (Point.toFloat << Point.fromPair) Window.dimensions
+  in
+    Signal.map2 view state dims
 
 state : Signal State
 state = Signal.foldp update PreInit input
@@ -104,7 +110,7 @@ input =
     Signal.map5 Input time fps winSize t w
 
 timeAndFps : Signal (Time, Time)
-timeAndFps = timestamp << fps <| 30
+timeAndFps = timestamp (fps 30)
 
 keyDown : Char -> Signal Bool
 keyDown k =

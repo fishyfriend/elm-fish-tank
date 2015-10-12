@@ -9,42 +9,44 @@ import Time exposing (Time)
 
 import Fish exposing (Fish)
 import Physics
+import Point exposing (Point)
 import Util.Random as UR
 
 
 type alias Tank =
-  { width : Float
-  , height : Float
+  { dims : Point Float
   , fishes : List Fish }
 
-init : Int -> (Float, Float) -> R.Seed -> Tank
-init n (w, h) s =
+
+init : Int -> Point Float -> R.Seed -> Tank
+init n dims s =
   let
-    g = R.list n (randomFish (w, h) 10)
+    g = R.list n (randomFish dims 10)
     (fs, _) = R.generate g s
   in
-     Tank w h fs
+     Tank dims fs
 
-randomFish : (Float, Float) -> Float -> R.Generator Fish
-randomFish (w, h) vMax =
+randomFish : Point Float -> Float -> R.Generator Fish
+randomFish xyMax vMax =
   let
-    p = R.pair (UR.pointInRect w h) (UR.pointInCirc vMax)
+    pV = R.pair (UR.pointInRect xyMax) (UR.pointInCirc vMax)
   in
-    (flip UR.map) p <| \((x, y), (vx, vy)) ->
-    Fish x y vx vy
+    UR.map (\(p,v) -> {pos=p,vel=v}) pV
 
-empty : (Float, Float) -> Tank
-empty (w, h) = Tank w h []
+empty : Point Float -> Tank
+empty dims = Tank dims []
 
-update : Float -> Tank -> Tank
-update t ({fishes} as tank) =
-  { tank |
-    fishes <- List.map (Physics.update t) fishes }
+update : Time -> Tank -> Tank
+update t tank =
+  let
+    fs = List.map (Physics.update t) tank.fishes
+  in
+     { tank | fishes <- fs }
 
 render : Tank -> Form
-render {width,height,fishes} =
+render {dims,fishes} =
   let
-    bg = rect width height
+    bg = rect dims.x dims.y
       |> filled blue
     fg = List.map Fish.render fishes
   in

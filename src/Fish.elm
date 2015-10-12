@@ -4,17 +4,15 @@ module Fish where
 import Color exposing (..)
 import Graphics.Collage exposing (..)
 
+import Physics
+import Point
 
-type alias Fish =
-  { x : Float
-  , y : Float
-  , vx : Float
-  , vy : Float
-  }
+
+type alias Fish = Physics.Object {}
 
 
 render : Fish -> Form
-render {x,y}
+render {pos}
   = oval 40 20
   |> filled green
-  |> move (x, y)
+  |> move (Point.toPair pos)
