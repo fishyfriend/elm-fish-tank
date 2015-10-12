@@ -1,5 +1,6 @@
 import Char
 import Color exposing (..)
+import Debug exposing (log)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (Element, centered)
 import List
@@ -26,29 +27,30 @@ type alias Input =
   , fps : Time
   , winSize : (Int, Int)
   , tKey : Bool
-  , wKey : Bool
-  }
-
+  , wKey : Bool }
 
 -- UPDATE --
 
 update : Input -> State -> State
-update {time, winSize, tKey, wKey} s =
+update ({time, fps, winSize, tKey, wKey} as i) s =
   case s of
     PreInit ->
       let
+        (w, h) = (toFloat (fst winSize), toFloat (snd winSize))
         seed = time |> inMilliseconds >> round >> initialSeed
-        tank = Tank.init 20 winSize seed
+        tank = Tank.init 20 (w, h) seed
       in
         Running { mode = Watch, tank = tank }
-    Running ( {mode,tank} as r ) ->
-      Running { r |
-        mode <-
+    Running ({mode,tank} as r) ->
+      let
+        m =
           case (mode, tKey, wKey) of
             (Tap, _, True) -> Watch
             (Watch, True, _) -> Tap
             _ -> mode
-      }
+        t = Tank.update (inSeconds fps) tank
+      in
+        Running { r | mode <- m, tank <- t }
 
 
 -- VIEW --

@@ -8,6 +8,8 @@ import Graphics.Collage exposing (..)
 type alias Fish =
   { x : Float
   , y : Float
+  , vx : Float
+  , vy : Float
   }
 
 
