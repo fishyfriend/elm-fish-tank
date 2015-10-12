@@ -2,23 +2,29 @@ module Physics where
 
 
 import Time exposing (Time)
+import Point exposing (Point)
 
-type alias Object =
-  { x : Float
-  , y : Float
-  , vx : Float
-  , vy : Float }
 
-drag = 0.0
+type alias Object a =
+  { a
+  | pos : Point Float
+  , vel : Point Float }
 
-update : Float -> Object -> Object
-update t ({x,y,vx,vy} as object) =
-  { object
-  | x <- x + vx * t
-  , y <- y + vy * t
-  , vx <- decel (drag * t) vx
-  , vy <- decel (drag * t) vy
-  }
+
+drag = 0.1
+
+update : Time -> Object a -> Object a
+update time ({pos,vel} as a) =
+  let
+    t = Time.inSeconds time
+    x' = pos.x + t * vel.x
+    y' = pos.y + t * vel.y
+    v'x = decel (t * drag) vel.x
+    v'y = decel (t * drag) vel.y
+  in
+    { a
+    | pos <- Point.fromPair (x', y')
+    , vel <- Point.fromPair (v'x, v'y) }
 
 decel : Float -> Float -> Float
 decel d v =
