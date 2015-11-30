@@ -1,6 +1,5 @@
 module Tank where
 
-
 import Color exposing (blue)
 import Debug exposing (log)
 import Graphics.Collage exposing (..)
@@ -12,11 +11,10 @@ import Physics
 import Point exposing (Point)
 import Util.Random as UR
 
-
 type alias Tank =
   { dims : Point Float
-  , fishes : List Fish }
-
+  , fishes : List Fish
+  }
 
 init : Int -> Point Float -> R.Seed -> Tank
 init n dims s =
@@ -31,7 +29,7 @@ randomFish xyMax vMax =
   let
     pV = R.pair (UR.pointInRect xyMax) (UR.pointInCirc vMax)
   in
-    UR.map (\(p,v) -> {pos=p,vel=v}) pV
+    R.map (\(p,v) -> {pos=p,vel=v}) pV
 
 empty : Point Float -> Tank
 empty dims = Tank dims []
@@ -41,7 +39,7 @@ update t tank =
   let
     fs = List.map (Physics.update t) tank.fishes
   in
-     { tank | fishes <- fs }
+     { tank | fishes = fs }
 
 render : Tank -> Form
 render {dims,fishes} =

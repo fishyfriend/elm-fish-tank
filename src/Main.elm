@@ -1,10 +1,10 @@
-import Char
+import Char exposing (KeyCode)
 import Color exposing (..)
 import Debug exposing (log)
 import Graphics.Collage exposing (..)
 import Graphics.Element exposing (Element, centered)
+import Keyboard
 import List
-import Keyboard exposing (KeyCode)
 import Random exposing (initialSeed)
 import Text
 import Time exposing (..)
@@ -52,7 +52,7 @@ update ({time, fps, winSize, tKey, wKey} as i) s =
             _ -> mode
         t = Tank.update fps tank
       in
-        Running { r | mode <- m, tank <- t }
+        Running { r | mode = m, tank = t }
 
 
 -- VIEW --
@@ -74,8 +74,10 @@ drawText : Mode -> Form
 drawText mode =
   let
     msg =
-      if | mode == Tap -> "Click to tap the tank!"
-         | otherwise -> ""
+      if mode == Tap then
+        "Click to tap the tank!"
+      else
+        ""
   in
     (formatText >> toForm) msg
 

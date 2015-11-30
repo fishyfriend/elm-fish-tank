@@ -1,15 +1,12 @@
 module Physics where
 
-
 import Time exposing (Time)
 import Point exposing (Point)
 
-
 type alias Object a =
-  { a
-  | pos : Point Float
-  , vel : Point Float }
-
+  { a | pos : Point Float
+      , vel : Point Float
+  }
 
 drag = 0.1
 
@@ -22,9 +19,9 @@ update time ({pos,vel} as a) =
     v'x = decel (t * drag) vel.x
     v'y = decel (t * drag) vel.y
   in
-    { a
-    | pos <- Point.fromPair (x', y')
-    , vel <- Point.fromPair (v'x, v'y) }
+    { a | pos = Point.fromPair (x', y')
+        , vel = Point.fromPair (v'x, v'y)
+    }
 
 decel : Float -> Float -> Float
 decel d v =

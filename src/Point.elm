@@ -1,6 +1,9 @@
 module Point where
 
-type alias Point a = { x : a, y : a }
+type alias Point a =
+  { x : a
+  , y : a
+  }
 
 fromPair : (a, a) -> Point a
 fromPair (x, y) = { x = x, y = y }
